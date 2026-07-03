@@ -323,10 +323,8 @@
       if (format === 'plus') return `+${v}`;
       return `${v}`;
     }
-    if (reduceMotion) {
-      el.textContent = formatValue(target);
-      return;
-    }
+    el.textContent = formatValue(target); // safe fallback if the animation below never finishes
+    if (reduceMotion) return;
     const duration = 1400;
     const start = performance.now();
     function tick(now) {
@@ -375,7 +373,11 @@
     revealed = true;
     splash.classList.add('hide');
     appEl.classList.add('visible');
-    document.querySelectorAll('[data-target]').forEach(animateCounter);
+    try {
+      document.querySelectorAll('[data-target]').forEach(animateCounter);
+    } catch (e) {
+      // never let a counter glitch block the splash from clearing
+    }
     setTimeout(() => splash.remove(), 600);
   }
 
