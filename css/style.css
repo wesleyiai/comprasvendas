@@ -772,6 +772,36 @@ h2 {
   50% { transform: scale(1.08); }
 }
 
+.pix-key-wrap {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.pix-key-label {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pix-key-value {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 13px;
+  color: var(--text);
+  word-break: break-all;
+  letter-spacing: 0.2px;
+}
+
+#btn-paid-now {
+  margin-top: 4px;
+}
+
 .pix-3d-wrap {
   width: 100%;
   display: flex;

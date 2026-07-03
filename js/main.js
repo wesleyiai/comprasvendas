@@ -4,7 +4,7 @@
   // ======= CONFIG =======
   const GROUP_INVITE_URL = 'https://chat.whatsapp.com/EpU45VYKpLcEpniby02fS8';
   const SHARE_TEXT = 'Entra no grupo COMPRAS E VENDAS - SERTÃO! Compre, venda e negocie com a comunidade 🛒';
-  const POLL_INTERVAL_MS = 3500;
+  const PIX_KEY = '30a9a8ac-383b-4dc0-b395-82168a2b5e78';
   const FREE_WAIT_SECONDS = 10 * 60;
   // =======================
 
@@ -26,13 +26,8 @@
   const rulesPanel = document.getElementById('rules-panel');
   const rulesClose = document.getElementById('rules-close');
 
-  const qrWrap = document.getElementById('qr-wrap');
-  const qrImg = document.getElementById('qr-img');
-  const paymentLoading = document.getElementById('payment-loading');
-  const pixActions = document.getElementById('pix-actions');
   const btnCopyPix = document.getElementById('btn-copy-pix');
-  const paymentStatus = document.getElementById('payment-status');
-  const btnCheckNow = document.getElementById('btn-check-now');
+  const btnPaidNow = document.getElementById('btn-paid-now');
   const freeWaitTimerEl = document.getElementById('free-wait-timer');
 
   const btnJoin = document.getElementById('btn-join');
@@ -46,9 +41,6 @@
 
   const state = {
     friend: sessionStorage.getItem('cv_task_friend') === '1',
-    paymentId: null,
-    pixCode: null,
-    pollTimer: null,
     freeWaitTimer: null,
     freeWaitRemaining: FREE_WAIT_SECONDS,
     entered: false,
@@ -199,7 +191,6 @@
     shareHint.textContent = 'Tudo certo!';
     setTimeout(() => {
       showStep('payment');
-      startPixCharge();
       startFreeWaitCountdown();
     }, 600);
   }
@@ -226,51 +217,14 @@
     rulesPanel.classList.add('hidden');
   });
 
-  // ---------- Step 2: real Pix payment ----------
-  async function startPixCharge() {
-    qrWrap.classList.add('hidden');
-    pixActions.classList.add('hidden');
-    btnCheckNow.classList.add('hidden');
-    paymentLoading.textContent = 'Gerando cobrança Pix...';
-    paymentLoading.classList.remove('hidden');
-
-    try {
-      const res = await fetch('/api/create-pix', { method: 'POST' });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Erro ao gerar cobrança Pix');
-      }
-
-      state.paymentId = data.id;
-      state.pixCode = data.qr_code;
-
-      if (data.qr_code_base64) {
-        qrImg.src = `data:image/png;base64,${data.qr_code_base64}`;
-        qrWrap.classList.remove('hidden');
-      }
-
-      paymentLoading.classList.add('hidden');
-      pixActions.classList.remove('hidden');
-      btnCheckNow.classList.remove('hidden');
-      paymentStatus.textContent = 'Aguardando confirmação do pagamento...';
-
-      startPolling();
-    } catch (err) {
-      paymentLoading.textContent = 'Não foi possível gerar a cobrança Pix. Toque para tentar de novo.';
-      paymentLoading.classList.remove('hidden');
-      paymentLoading.onclick = startPixCharge;
-    }
-  }
-
+  // ---------- Step 2: Pix payment (static key, self-declared) ----------
   btnCopyPix.addEventListener('click', async () => {
-    if (!state.pixCode) return;
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(state.pixCode);
+        await navigator.clipboard.writeText(PIX_KEY);
       } else {
         const textarea = document.createElement('textarea');
-        textarea.value = state.pixCode;
+        textarea.value = PIX_KEY;
         textarea.style.position = 'fixed';
         textarea.style.opacity = '0';
         document.body.appendChild(textarea);
@@ -279,53 +233,23 @@
         document.body.removeChild(textarea);
       }
       btnCopyPix.classList.add('copied');
-      btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Código copiado!';
-      showToast('Código Pix copiado! Cole no app do seu banco 💚');
+      btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Chave copiada!';
+      showToast('Chave Pix copiada! Cole no app do seu banco 💚');
       vibrate(15);
       setTimeout(() => {
         btnCopyPix.classList.remove('copied');
-        btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Copiar código Pix (copia e cola)';
+        btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Copiar chave Pix';
       }, 2500);
     } catch (e) {
       showToast('Não foi possível copiar automaticamente.');
     }
   });
 
-  async function checkPaymentOnce() {
-    if (!state.paymentId) return false;
-    try {
-      const res = await fetch(`/api/check-payment?id=${encodeURIComponent(state.paymentId)}`);
-      const data = await res.json();
-      if (!res.ok) return false;
-      if (data.status === 'approved') {
-        grantAccess('paid');
-        return true;
-      }
-      return false;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function startPolling() {
-    stopPolling();
-    state.pollTimer = setInterval(checkPaymentOnce, POLL_INTERVAL_MS);
-  }
-
-  function stopPolling() {
-    if (state.pollTimer) {
-      clearInterval(state.pollTimer);
-      state.pollTimer = null;
-    }
-  }
-
-  btnCheckNow.addEventListener('click', async () => {
-    btnCheckNow.textContent = 'Verificando...';
-    const approved = await checkPaymentOnce();
-    if (!approved) {
-      btnCheckNow.textContent = 'Já paguei, verificar agora';
-      showToast('Pagamento ainda não identificado. Aguarde alguns segundos após pagar.');
-    }
+  // Self-declared: no automated verification is possible against a static
+  // Pix key (no transaction id, no webhook), so this doesn't pretend to check
+  // anything — it takes the person's word and grants access immediately.
+  btnPaidNow.addEventListener('click', () => {
+    grantAccess('paid');
   });
 
   // ---------- Step 2b: free path (wait 10 min, no payment required) ----------
@@ -360,12 +284,11 @@
   function grantAccess(source) {
     if (state.entered) return;
     state.entered = true;
-    stopPolling();
     stopFreeWaitCountdown();
 
     if (source === 'paid') {
-      verifyTitle.textContent = 'Pagamento confirmado!';
-      verifySub.textContent = 'Seu acesso foi liberado. Já pode entrar no grupo! 🎉';
+      verifyTitle.textContent = 'Tudo certo!';
+      verifySub.textContent = 'Assim que conferirmos seu Pix no extrato, seu acesso fica confirmado. Já pode entrar no grupo! 🎉';
     } else {
       verifyTitle.textContent = 'Tempo de espera concluído!';
       verifySub.textContent = 'Seu acesso gratuito foi liberado. Já pode entrar no grupo! 🎉';
