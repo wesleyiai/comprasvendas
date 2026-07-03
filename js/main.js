@@ -5,8 +5,7 @@
   const GROUP_INVITE_URL = 'https://chat.whatsapp.com/EpU45VYKpLcEpniby02fS8';
   const SHARE_TEXT = 'Entra no grupo COMPRAS E VENDAS - SERTÃO! Compre, venda e negocie com a comunidade 🛒';
   const PIX_KEY = '30a9a8ac-383b-4dc0-b395-82168a2b5e78';
-  const PAYMENT_WINDOW_SECONDS = 5 * 60; // cosmetic urgency timer on the PIX card
-  const UNLOCK_DELAY_SECONDS = 10;       // group-join button always appears after this, regardless of payment
+  const VERIFY_SECONDS = 25;
   // =======================
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -17,30 +16,38 @@
     intro: panel.querySelector('[data-step="intro"]'),
     share: panel.querySelector('[data-step="share"]'),
     support: panel.querySelector('[data-step="support"]'),
+    share2: panel.querySelector('[data-step="share2"]'),
+    verify: panel.querySelector('[data-step="verify"]'),
   };
 
   const btnStart = document.getElementById('btn-start');
   const taskStatus = document.getElementById('task-status');
   const taskFriend = document.getElementById('task-friend');
   const shareHint = document.getElementById('share-hint');
-  const btnJoin = document.getElementById('btn-join');
   const rulesToggle = document.getElementById('btn-rules-toggle');
   const rulesPanel = document.getElementById('rules-panel');
   const rulesClose = document.getElementById('rules-close');
 
-  const pixTimerEl = document.getElementById('pix-timer');
-  const pixKeyEl = document.getElementById('pix-key');
   const btnCopyPix = document.getElementById('btn-copy-pix');
-  const unlockWait = document.getElementById('unlock-wait');
-  const unlockNum = document.getElementById('unlock-num');
-  const miniRingFg = document.getElementById('mini-ring-fg');
+  const btnSupportContinue = document.getElementById('btn-support-continue');
+
+  const taskSite = document.getElementById('task-site');
+  const share2Hint = document.getElementById('share2-hint');
+
+  const ringFg = document.getElementById('ring-fg');
+  const countdownNum = document.getElementById('countdown-num');
+  const btnJoin = document.getElementById('btn-join');
 
   btnJoin.href = GROUP_INVITE_URL;
-  pixKeyEl.textContent = PIX_KEY;
+
+  const RING_CIRCUMFERENCE = 2 * Math.PI * 62;
+  ringFg.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
+  ringFg.style.strokeDashoffset = '0';
 
   const state = {
     status: sessionStorage.getItem('cv_task_status') === '1',
     friend: sessionStorage.getItem('cv_task_friend') === '1',
+    site: sessionStorage.getItem('cv_task_site') === '1',
   };
 
   // ---------- Helpers ----------
@@ -96,7 +103,7 @@
     ripple.addEventListener('animationend', () => ripple.remove());
   }
 
-  document.querySelectorAll('.btn, .task-item, .copy-btn').forEach((el) => {
+  document.querySelectorAll('.btn, .task-item, .btn-3d').forEach((el) => {
     el.addEventListener('click', (e) => spawnRipple(el, e));
   });
 
@@ -169,23 +176,19 @@
     requestAnimationFrame(tick);
   }
 
-  // ---------- Flow ----------
+  // ---------- Step 1: share gate (status + friend) ----------
   function markDone(el, key) {
     el.classList.add('done');
     state[key] = true;
     sessionStorage.setItem(`cv_task_${key}`, '1');
     vibrate(15);
-    checkAllDone();
+    checkShareGateDone();
   }
 
-  function checkAllDone() {
+  function checkShareGateDone() {
     if (state.status && state.friend) {
-      shareHint.textContent = 'Tudo certo! Preparando seu acesso...';
-      setTimeout(() => {
-        showStep('support');
-        startPixTimer();
-        startUnlockCountdown();
-      }, 600);
+      shareHint.textContent = 'Tudo certo!';
+      setTimeout(() => showStep('support'), 600);
     }
   }
 
@@ -205,7 +208,7 @@
     showStep('share');
     if (state.status) taskStatus.classList.add('done');
     if (state.friend) taskFriend.classList.add('done');
-    checkAllDone();
+    checkShareGateDone();
   });
 
   rulesToggle.addEventListener('click', () => {
@@ -217,7 +220,7 @@
     rulesPanel.classList.add('hidden');
   });
 
-  // ---------- Copy PIX key ----------
+  // ---------- Step 2: support (copy PIX) ----------
   btnCopyPix.addEventListener('click', async () => {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -233,50 +236,53 @@
         document.body.removeChild(textarea);
       }
       btnCopyPix.classList.add('copied');
-      btnCopyPix.querySelector('span').textContent = 'Copiado!';
-      showToast('Chave PIX copiada!');
+      btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Chave copiada!';
+      showToast('Chave Pix copiada! Cole no app do seu banco 💚');
       vibrate(15);
       setTimeout(() => {
         btnCopyPix.classList.remove('copied');
-        btnCopyPix.querySelector('span').textContent = 'Copiar';
-      }, 2000);
+        btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Copiar Chave Pix e Contribuir';
+      }, 2500);
     } catch (e) {
       showToast('Não foi possível copiar automaticamente.');
     }
   });
 
-  // ---------- PIX cosmetic countdown (5 min) ----------
-  function startPixTimer() {
-    let remaining = PAYMENT_WINDOW_SECONDS;
-    function render() {
-      const m = Math.floor(remaining / 60).toString().padStart(2, '0');
-      const s = Math.floor(remaining % 60).toString().padStart(2, '0');
-      pixTimerEl.textContent = `${m}:${s}`;
-    }
-    render();
-    const timer = setInterval(() => {
-      remaining -= 1;
-      if (remaining < 0) { clearInterval(timer); return; }
-      render();
-    }, 1000);
-  }
+  btnSupportContinue.addEventListener('click', () => {
+    showStep('share2');
+  });
 
-  // ---------- Unlock join button after UNLOCK_DELAY_SECONDS ----------
-  const MINI_CIRCUMFERENCE = 2 * Math.PI * 10;
-  function startUnlockCountdown() {
-    let remaining = UNLOCK_DELAY_SECONDS;
-    unlockNum.textContent = remaining;
-    miniRingFg.style.strokeDashoffset = '0';
+  // ---------- Step 3: share site link ----------
+  taskSite.addEventListener('click', () => {
+    if (taskSite.classList.contains('done')) return;
+    openWhatsAppShare();
+    setTimeout(() => {
+      taskSite.classList.add('done');
+      state.site = true;
+      sessionStorage.setItem('cv_task_site', '1');
+      vibrate(15);
+      share2Hint.textContent = 'Tudo certo! Confirmando...';
+      setTimeout(() => {
+        showStep('verify');
+        startVerifyCountdown();
+      }, 700);
+    }, 500);
+  });
+
+  // ---------- Step 4: verify (25s) ----------
+  function startVerifyCountdown() {
+    let remaining = VERIFY_SECONDS;
+    countdownNum.textContent = remaining;
+    ringFg.style.strokeDashoffset = '0';
 
     function tick() {
-      const elapsed = UNLOCK_DELAY_SECONDS - remaining;
-      const progress = elapsed / UNLOCK_DELAY_SECONDS;
-      miniRingFg.style.strokeDashoffset = `${MINI_CIRCUMFERENCE * progress}`;
-      unlockNum.textContent = remaining;
+      const elapsed = VERIFY_SECONDS - remaining;
+      const progress = elapsed / VERIFY_SECONDS;
+      ringFg.style.strokeDashoffset = `${RING_CIRCUMFERENCE * progress}`;
+      countdownNum.textContent = remaining;
 
       if (remaining <= 0) {
         clearInterval(timer);
-        unlockWait.classList.add('hidden');
         btnJoin.classList.remove('hidden');
         fireConfetti();
         vibrate([10, 40, 10]);
