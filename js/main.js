@@ -4,8 +4,8 @@
   // ======= CONFIG =======
   const GROUP_INVITE_URL = 'https://chat.whatsapp.com/EpU45VYKpLcEpniby02fS8';
   const SHARE_TEXT = 'Entra no grupo COMPRAS E VENDAS - SERTÃO! Compre, venda e negocie com a comunidade 🛒';
-  const PIX_KEY = '30a9a8ac-383b-4dc0-b395-82168a2b5e78';
-  const VERIFY_SECONDS = 25;
+  const POLL_INTERVAL_MS = 3500;
+  const FREE_WAIT_SECONDS = 10 * 60;
   // =======================
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -15,45 +15,43 @@
   const steps = {
     intro: panel.querySelector('.step[data-step="intro"]'),
     share: panel.querySelector('.step[data-step="share"]'),
-    support: panel.querySelector('.step[data-step="support"]'),
-    share2: panel.querySelector('.step[data-step="share2"]'),
+    payment: panel.querySelector('.step[data-step="payment"]'),
     verify: panel.querySelector('.step[data-step="verify"]'),
   };
 
   const btnStart = document.getElementById('btn-start');
-  const taskStatus = document.getElementById('task-status');
   const taskFriend = document.getElementById('task-friend');
   const shareHint = document.getElementById('share-hint');
   const rulesToggle = document.getElementById('btn-rules-toggle');
   const rulesPanel = document.getElementById('rules-panel');
   const rulesClose = document.getElementById('rules-close');
 
+  const qrWrap = document.getElementById('qr-wrap');
+  const qrImg = document.getElementById('qr-img');
+  const paymentLoading = document.getElementById('payment-loading');
+  const pixActions = document.getElementById('pix-actions');
   const btnCopyPix = document.getElementById('btn-copy-pix');
-  const btnSupportContinue = document.getElementById('btn-support-continue');
+  const paymentStatus = document.getElementById('payment-status');
+  const btnCheckNow = document.getElementById('btn-check-now');
+  const freeWaitTimerEl = document.getElementById('free-wait-timer');
 
-  const taskSite = document.getElementById('task-site');
-  const share2Hint = document.getElementById('share2-hint');
-
-  const ringFg = document.getElementById('ring-fg');
-  const countdownNum = document.getElementById('countdown-num');
-  const verifyCheckIcon = document.getElementById('verify-check-icon');
-  const verifyTitle = document.getElementById('verify-title');
-  const verifySubtitle = document.getElementById('verify-subtitle');
   const btnJoin = document.getElementById('btn-join');
+  const verifyTitle = document.getElementById('verify-title');
+  const verifySub = document.getElementById('verify-sub');
 
   const progressDots = document.getElementById('progress-dots');
-  const progressOrder = ['share', 'support', 'share2', 'verify'];
+  const progressOrder = ['share', 'payment', 'verify'];
 
   btnJoin.href = GROUP_INVITE_URL;
 
-  const RING_CIRCUMFERENCE = 2 * Math.PI * 62;
-  ringFg.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
-  ringFg.style.strokeDashoffset = '0';
-
   const state = {
-    status: sessionStorage.getItem('cv_task_status') === '1',
     friend: sessionStorage.getItem('cv_task_friend') === '1',
-    site: sessionStorage.getItem('cv_task_site') === '1',
+    paymentId: null,
+    pixCode: null,
+    pollTimer: null,
+    freeWaitTimer: null,
+    freeWaitRemaining: FREE_WAIT_SECONDS,
+    entered: false,
   };
 
   // ---------- Helpers ----------
@@ -192,39 +190,31 @@
     requestAnimationFrame(tick);
   }
 
-  // ---------- Step 1: share gate (status + friend) ----------
-  function markDone(el, key) {
-    el.classList.add('done');
-    state[key] = true;
-    sessionStorage.setItem(`cv_task_${key}`, '1');
+  // ---------- Step 1: share gate (1 friend) ----------
+  function markFriendDone() {
+    taskFriend.classList.add('done');
+    state.friend = true;
+    sessionStorage.setItem('cv_task_friend', '1');
     vibrate(15);
-    checkShareGateDone();
+    shareHint.textContent = 'Tudo certo!';
+    setTimeout(() => {
+      showStep('payment');
+      startPixCharge();
+      startFreeWaitCountdown();
+    }, 600);
   }
-
-  function checkShareGateDone() {
-    if (state.status && state.friend) {
-      shareHint.textContent = 'Tudo certo!';
-      setTimeout(() => showStep('support'), 600);
-    }
-  }
-
-  taskStatus.addEventListener('click', () => {
-    if (taskStatus.classList.contains('done')) return;
-    openWhatsAppShare();
-    setTimeout(() => markDone(taskStatus, 'status'), 500);
-  });
 
   taskFriend.addEventListener('click', () => {
     if (taskFriend.classList.contains('done')) return;
     openWhatsAppShare();
-    setTimeout(() => markDone(taskFriend, 'friend'), 500);
+    setTimeout(markFriendDone, 500);
   });
 
   btnStart.addEventListener('click', () => {
     showStep('share');
-    if (state.status) taskStatus.classList.add('done');
-    if (state.friend) taskFriend.classList.add('done');
-    checkShareGateDone();
+    if (state.friend) {
+      taskFriend.classList.add('done');
+    }
   });
 
   rulesToggle.addEventListener('click', () => {
@@ -236,14 +226,51 @@
     rulesPanel.classList.add('hidden');
   });
 
-  // ---------- Step 2: support (copy PIX) ----------
+  // ---------- Step 2: real Pix payment ----------
+  async function startPixCharge() {
+    qrWrap.classList.add('hidden');
+    pixActions.classList.add('hidden');
+    btnCheckNow.classList.add('hidden');
+    paymentLoading.textContent = 'Gerando cobrança Pix...';
+    paymentLoading.classList.remove('hidden');
+
+    try {
+      const res = await fetch('/api/create-pix', { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao gerar cobrança Pix');
+      }
+
+      state.paymentId = data.id;
+      state.pixCode = data.qr_code;
+
+      if (data.qr_code_base64) {
+        qrImg.src = `data:image/png;base64,${data.qr_code_base64}`;
+        qrWrap.classList.remove('hidden');
+      }
+
+      paymentLoading.classList.add('hidden');
+      pixActions.classList.remove('hidden');
+      btnCheckNow.classList.remove('hidden');
+      paymentStatus.textContent = 'Aguardando confirmação do pagamento...';
+
+      startPolling();
+    } catch (err) {
+      paymentLoading.textContent = 'Não foi possível gerar a cobrança Pix. Toque para tentar de novo.';
+      paymentLoading.classList.remove('hidden');
+      paymentLoading.onclick = startPixCharge;
+    }
+  }
+
   btnCopyPix.addEventListener('click', async () => {
+    if (!state.pixCode) return;
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(PIX_KEY);
+        await navigator.clipboard.writeText(state.pixCode);
       } else {
         const textarea = document.createElement('textarea');
-        textarea.value = PIX_KEY;
+        textarea.value = state.pixCode;
         textarea.style.position = 'fixed';
         textarea.style.opacity = '0';
         document.body.appendChild(textarea);
@@ -252,73 +279,101 @@
         document.body.removeChild(textarea);
       }
       btnCopyPix.classList.add('copied');
-      btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Chave copiada!';
-      showToast('Chave Pix copiada! Cole no app do seu banco 💚');
+      btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Código copiado!';
+      showToast('Código Pix copiado! Cole no app do seu banco 💚');
       vibrate(15);
       setTimeout(() => {
         btnCopyPix.classList.remove('copied');
-        btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Copiar Chave Pix e Contribuir';
+        btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Copiar código Pix (copia e cola)';
       }, 2500);
     } catch (e) {
       showToast('Não foi possível copiar automaticamente.');
     }
   });
 
-  btnSupportContinue.addEventListener('click', () => {
-    showStep('share2');
-  });
-
-  // ---------- Step 3: share site link ----------
-  taskSite.addEventListener('click', () => {
-    if (taskSite.classList.contains('done')) return;
-    openWhatsAppShare();
-    setTimeout(() => {
-      taskSite.classList.add('done');
-      state.site = true;
-      sessionStorage.setItem('cv_task_site', '1');
-      vibrate(15);
-      share2Hint.textContent = 'Tudo certo! Confirmando...';
-      setTimeout(() => {
-        showStep('verify');
-        startVerifyCountdown();
-      }, 700);
-    }, 500);
-  });
-
-  // ---------- Step 4: verify (25s) ----------
-  function startVerifyCountdown() {
-    let remaining = VERIFY_SECONDS;
-    countdownNum.textContent = remaining;
-    countdownNum.classList.remove('hidden');
-    verifyCheckIcon.classList.add('hidden');
-    verifyTitle.textContent = 'Confirmando compartilhamento...';
-    verifyTitle.classList.remove('done');
-    verifySubtitle.textContent = 'Estamos conferindo sua participação. Isso leva só mais alguns segundos.';
-    ringFg.style.strokeDashoffset = '0';
-
-    function tick() {
-      const elapsed = VERIFY_SECONDS - remaining;
-      const progress = elapsed / VERIFY_SECONDS;
-      ringFg.style.strokeDashoffset = `${RING_CIRCUMFERENCE * progress}`;
-      countdownNum.textContent = remaining;
-
-      if (remaining <= 0) {
-        clearInterval(timer);
-        countdownNum.classList.add('hidden');
-        verifyCheckIcon.classList.remove('hidden');
-        verifyTitle.textContent = 'CONCLUÍDO!';
-        verifyTitle.classList.add('done');
-        verifySubtitle.textContent = 'Sua participação foi confirmada. Já pode entrar no grupo! 🎉';
-        btnJoin.classList.remove('hidden');
-        fireConfetti();
-        vibrate([10, 40, 10]);
-        return;
+  async function checkPaymentOnce() {
+    if (!state.paymentId) return false;
+    try {
+      const res = await fetch(`/api/check-payment?id=${encodeURIComponent(state.paymentId)}`);
+      const data = await res.json();
+      if (!res.ok) return false;
+      if (data.status === 'approved') {
+        grantAccess('paid');
+        return true;
       }
-      remaining -= 1;
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function startPolling() {
+    stopPolling();
+    state.pollTimer = setInterval(checkPaymentOnce, POLL_INTERVAL_MS);
+  }
+
+  function stopPolling() {
+    if (state.pollTimer) {
+      clearInterval(state.pollTimer);
+      state.pollTimer = null;
+    }
+  }
+
+  btnCheckNow.addEventListener('click', async () => {
+    btnCheckNow.textContent = 'Verificando...';
+    const approved = await checkPaymentOnce();
+    if (!approved) {
+      btnCheckNow.textContent = 'Já paguei, verificar agora';
+      showToast('Pagamento ainda não identificado. Aguarde alguns segundos após pagar.');
+    }
+  });
+
+  // ---------- Step 2b: free path (wait 10 min, no payment required) ----------
+  function formatMMSS(totalSeconds) {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  function startFreeWaitCountdown() {
+    stopFreeWaitCountdown();
+    state.freeWaitRemaining = FREE_WAIT_SECONDS;
+    if (freeWaitTimerEl) freeWaitTimerEl.textContent = formatMMSS(state.freeWaitRemaining);
+    state.freeWaitTimer = setInterval(() => {
+      state.freeWaitRemaining--;
+      if (freeWaitTimerEl) freeWaitTimerEl.textContent = formatMMSS(Math.max(0, state.freeWaitRemaining));
+      if (state.freeWaitRemaining <= 0) {
+        stopFreeWaitCountdown();
+        grantAccess('free');
+      }
+    }, 1000);
+  }
+
+  function stopFreeWaitCountdown() {
+    if (state.freeWaitTimer) {
+      clearInterval(state.freeWaitTimer);
+      state.freeWaitTimer = null;
+    }
+  }
+
+  // ---------- Grant access (paid via Pix, or free after the wait) ----------
+  function grantAccess(source) {
+    if (state.entered) return;
+    state.entered = true;
+    stopPolling();
+    stopFreeWaitCountdown();
+
+    if (source === 'paid') {
+      verifyTitle.textContent = 'Pagamento confirmado!';
+      verifySub.textContent = 'Seu acesso foi liberado. Já pode entrar no grupo! 🎉';
+    } else {
+      verifyTitle.textContent = 'Tempo de espera concluído!';
+      verifySub.textContent = 'Seu acesso gratuito foi liberado. Já pode entrar no grupo! 🎉';
     }
 
-    tick();
-    const timer = setInterval(tick, 1000);
+    showStep('verify');
+    fireConfetti();
+    vibrate([10, 40, 10]);
   }
 
   window.addEventListener('resize', () => {

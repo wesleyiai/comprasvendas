@@ -749,6 +749,7 @@ h2 {
   font-size: 12px;
   color: var(--text-faint);
   margin: 4px 0 0;
+  cursor: default;
 }
 
 /* ---------- Support / PIX step ---------- */
@@ -860,6 +861,88 @@ h2 {
   text-align: center;
 }
 
+/* ---------- Motivational quote ---------- */
+.motivational-quote {
+  width: 100%;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--gold);
+  border-left: 2px solid var(--gold-dark);
+  padding-left: 12px;
+  margin: 0 0 20px;
+  text-align: left;
+  line-height: 1.5;
+}
+
+/* ---------- Free-wait (no payment) path ---------- */
+.free-wait-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 20px 0 14px;
+  color: var(--text-faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.free-wait-divider::before,
+.free-wait-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+}
+
+.free-wait-box {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(255,255,255,0.16);
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.free-wait-label {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.free-wait-timer {
+  font-family: var(--font-head);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
+.free-wait-sub {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 4px;
+}
+
+/* ---------- QR / Pix payment step ---------- */
+.qr-wrap {
+  width: 180px;
+  height: 180px;
+  padding: 10px;
+  background: #fff;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+}
+
+.qr-wrap img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 6px;
+}
+
 /* ---------- Verify step ---------- */
 .ring-wrap {
   position: relative;
@@ -882,9 +965,11 @@ h2 {
   stroke-width: 6;
   stroke-linecap: round;
   stroke-dasharray: 389.6;
-  stroke-dashoffset: 0;
-  transition: stroke-dashoffset 1s linear;
   filter: drop-shadow(0 0 6px rgba(20,224,127,0.6));
+}
+
+.ring-fg-complete {
+  stroke-dashoffset: 0;
 }
 
 .ring-center {
@@ -904,7 +989,7 @@ h2 {
   animation: join-in 0.5s cubic-bezier(.2,.8,.2,1);
 }
 
-#verify-title.done {
+h2.done {
   color: var(--green);
 }
 

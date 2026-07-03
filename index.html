@@ -57,8 +57,7 @@
 
       <div class="progress-dots hidden" id="progress-dots">
         <span class="dot" data-dot="share"></span>
-        <span class="dot" data-dot="support"></span>
-        <span class="dot" data-dot="share2"></span>
+        <span class="dot" data-dot="payment"></span>
         <span class="dot" data-dot="verify"></span>
       </div>
 
@@ -133,95 +132,77 @@
 
       <!-- STEP 1: SHARE GATE -->
       <div class="step step-share hidden" data-step="share">
-        <h2>Falta pouco! Complete as 2 etapas</h2>
-        <p class="subtitle small">Isso ajuda o grupo a crescer e continuar ativo pra comunidade toda. Depois de completar, seu acesso é liberado automaticamente.</p>
+        <h2>Falta pouco! Compartilhe o site</h2>
+        <p class="subtitle small">Isso ajuda o grupo a crescer e continuar ativo pra comunidade toda. Depois de compartilhar, você segue para a etapa final.</p>
 
         <div class="task-list">
-          <button class="task-item" id="task-status" data-task="status">
-            <div class="task-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.38 5.07L2 22l5.06-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 2a8 8 0 1 1 0 16 7.9 7.9 0 0 1-4.06-1.12l-.29-.17-3 .79.8-2.93-.19-.3A7.9 7.9 0 0 1 4 12a8 8 0 0 1 8-8z"/></svg>
-            </div>
-            <div class="task-body">
-              <strong>1. Compartilhar no Status</strong>
-              <span>Publique o convite no seu status do WhatsApp</span>
-            </div>
-            <div class="task-check"><span class="check-icon">✓</span></div>
-          </button>
-
           <button class="task-item" id="task-friend" data-task="friend">
             <div class="task-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+              <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2z"/></svg>
             </div>
             <div class="task-body">
-              <strong>2. Enviar para 1 amigo</strong>
-              <span>Compartilhe o convite com uma pessoa</span>
+              <strong>Compartilhar no WhatsApp</strong>
+              <span>Compartilhe o site com seus contatos</span>
             </div>
             <div class="task-check"><span class="check-icon">✓</span></div>
           </button>
         </div>
 
-        <p class="hint" id="share-hint">Toque nos dois itens acima para abrir o WhatsApp.</p>
+        <p class="hint" id="share-hint">Toque no botão acima para compartilhar o site no WhatsApp.</p>
       </div>
 
-      <!-- STEP 2: SUPPORT (PIX) -->
-      <div class="step step-support hidden" data-step="support">
+      <!-- STEP 2: PAYMENT (PIX) -->
+      <div class="step step-payment hidden" data-step="payment">
         <div class="support-icon">
           <svg viewBox="0 0 24 24" width="30" height="30"><path fill="currentColor" d="M12 21s-6.7-4.35-9.55-8.36C.6 9.98 1.2 6.6 3.9 4.9c2.3-1.45 5-.9 6.6 1.1L12 7.5l1.5-1.5c1.6-2 4.3-2.55 6.6-1.1 2.7 1.7 3.3 5.08 1.45 7.74C18.7 16.65 12 21 12 21z"/></svg>
         </div>
-        <h2>Esse grupo é gratuito graças a pessoas como você</h2>
-        <p class="subtitle small">Manter o grupo ativo, moderado e sem spam tem custo. Contribua com <strong>qualquer valor via PIX</strong> — é rápido e sua ajuda faz toda a diferença.</p>
+        <h2>Sua entrada custa apenas R$ 2,00</h2>
+        <p class="subtitle small">Um valor simbólico — menos que um cafezinho — pra manter o grupo ativo, moderado e sem spam. Pague com Pix e garanta seu lugar na maior comunidade de compra e venda do Sertão! 🌵</p>
 
-        <div class="pix-3d-wrap">
+        <p class="motivational-quote">"Quem decide primeiro, negocia primeiro. As melhores oportunidades do Sertão não esperam por quem fica de fora."</p>
+
+        <div class="qr-wrap hidden" id="qr-wrap">
+          <img id="qr-img" alt="QR Code Pix" width="180" height="180">
+        </div>
+        <p class="hint" id="payment-loading">Gerando cobrança Pix...</p>
+
+        <div class="pix-3d-wrap hidden" id="pix-actions">
           <button class="btn-3d" id="btn-copy-pix" type="button">
             <span class="btn-3d-face">
               <svg class="icon-copy" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11z"/></svg>
               <svg class="icon-check" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
-              <span>Copiar Chave Pix e Contribuir</span>
+              <span>Copiar código Pix (copia e cola)</span>
             </span>
           </button>
-          <span class="pix-hint">Chave aleatória protegida · qualquer valor ajuda muito</span>
+          <span class="pix-hint" id="payment-status">Aguardando confirmação do pagamento...</span>
         </div>
 
-        <button class="link-btn" id="btn-support-continue">Continuar</button>
-      </div>
+        <button class="link-btn hidden" id="btn-check-now">Já paguei, verificar agora</button>
 
-      <!-- STEP 3: SHARE SITE LINK -->
-      <div class="step step-share2 hidden" data-step="share2">
-        <h2>Só mais uma etapa</h2>
-        <p class="subtitle small">Compartilhe o link deste site com alguém no WhatsApp pra gente continuar levando o grupo pra mais gente do Sertão.</p>
+        <div class="free-wait-divider"><span>ou</span></div>
 
-        <div class="task-list">
-          <button class="task-item" id="task-site" data-task="site">
-            <div class="task-icon">
-              <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 1 0-3-3c0 .24.04.47.09.7L8.04 9.81A2.99 2.99 0 0 0 3 12a3 3 0 0 0 5.04 2.19l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.92-2.92z"/></svg>
-            </div>
-            <div class="task-body">
-              <strong>Compartilhar o link do site</strong>
-              <span>Envie para 1 contato ou publique no seu status</span>
-            </div>
-            <div class="task-check"><span class="check-icon">✓</span></div>
-          </button>
+        <div class="free-wait-box" id="free-wait-box">
+          <div class="free-wait-label">Prefere não pagar? Entre de graça em</div>
+          <div class="free-wait-timer" id="free-wait-timer">10:00</div>
+          <div class="free-wait-sub">Só aguardar — sem custo nenhum.</div>
         </div>
-
-        <p class="hint" id="share2-hint">Toque para abrir o WhatsApp.</p>
       </div>
 
-      <!-- STEP 4: VERIFYING -->
+      <!-- STEP 3: CONFIRMED -->
       <div class="step step-verify hidden" data-step="verify">
         <div class="ring-wrap">
           <svg class="progress-ring" width="140" height="140">
             <circle class="ring-bg" cx="70" cy="70" r="62"/>
-            <circle class="ring-fg" id="ring-fg" cx="70" cy="70" r="62"/>
+            <circle class="ring-fg ring-fg-complete" cx="70" cy="70" r="62"/>
           </svg>
           <div class="ring-center">
-            <span id="countdown-num">25</span>
-            <svg id="verify-check-icon" class="verify-check-icon hidden" viewBox="0 0 24 24" width="40" height="40"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+            <svg class="verify-check-icon" viewBox="0 0 24 24" width="40" height="40"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
           </div>
         </div>
-        <h2 id="verify-title">Confirmando compartilhamento...</h2>
-        <p class="subtitle small" id="verify-subtitle">Estamos conferindo sua participação. Isso leva só mais alguns segundos.</p>
+        <h2 class="done" id="verify-title">Pagamento confirmado!</h2>
+        <p class="subtitle small" id="verify-sub">Seu acesso foi liberado. Já pode entrar no grupo! 🎉</p>
 
-        <a class="btn btn-primary btn-glow btn-whatsapp hidden" id="btn-join" href="#" target="_blank" rel="noopener">
+        <a class="btn btn-primary btn-glow btn-whatsapp" id="btn-join" href="#" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm5.8 14.14c-.24.68-1.4 1.3-1.93 1.35-.5.05-1.02.24-3.4-.71-2.87-1.15-4.71-4.06-4.86-4.25-.14-.19-1.16-1.54-1.16-2.94s.73-2.08 1-2.36c.26-.29.57-.36.76-.36h.55c.18 0 .42-.03.64.49.24.58.81 2 .88 2.14.07.15.12.32.02.51-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.15-.3.31-.13.6.17.29.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.35 1.46.29.15.46.13.63-.08.17-.2.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.66.78 1.94.93.29.14.48.21.55.33.07.12.07.68-.17 1.36z"/></svg>
           <span>Entrar no Grupo</span>
         </a>
