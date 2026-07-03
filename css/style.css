@@ -898,6 +898,16 @@ h2 {
   font-weight: 700;
 }
 
+.verify-check-icon {
+  color: var(--green);
+  filter: drop-shadow(0 0 8px rgba(20,224,127,0.6));
+  animation: join-in 0.5s cubic-bezier(.2,.8,.2,1);
+}
+
+#verify-title.done {
+  color: var(--green);
+}
+
 #btn-join {
   margin-top: 6px;
   animation: join-in 0.6s cubic-bezier(.2,.8,.2,1);

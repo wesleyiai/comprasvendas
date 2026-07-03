@@ -36,6 +36,9 @@
 
   const ringFg = document.getElementById('ring-fg');
   const countdownNum = document.getElementById('countdown-num');
+  const verifyCheckIcon = document.getElementById('verify-check-icon');
+  const verifyTitle = document.getElementById('verify-title');
+  const verifySubtitle = document.getElementById('verify-subtitle');
   const btnJoin = document.getElementById('btn-join');
 
   const progressDots = document.getElementById('progress-dots');
@@ -286,6 +289,11 @@
   function startVerifyCountdown() {
     let remaining = VERIFY_SECONDS;
     countdownNum.textContent = remaining;
+    countdownNum.classList.remove('hidden');
+    verifyCheckIcon.classList.add('hidden');
+    verifyTitle.textContent = 'Confirmando compartilhamento...';
+    verifyTitle.classList.remove('done');
+    verifySubtitle.textContent = 'Estamos conferindo sua participação. Isso leva só mais alguns segundos.';
     ringFg.style.strokeDashoffset = '0';
 
     function tick() {
@@ -296,6 +304,11 @@
 
       if (remaining <= 0) {
         clearInterval(timer);
+        countdownNum.classList.add('hidden');
+        verifyCheckIcon.classList.remove('hidden');
+        verifyTitle.textContent = 'CONCLUÍDO!';
+        verifyTitle.classList.add('done');
+        verifySubtitle.textContent = 'Sua participação foi confirmada. Já pode entrar no grupo! 🎉';
         btnJoin.classList.remove('hidden');
         fireConfetti();
         vibrate([10, 40, 10]);
