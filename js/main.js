@@ -13,11 +13,11 @@
 
   const panel = document.getElementById('panel');
   const steps = {
-    intro: panel.querySelector('[data-step="intro"]'),
-    share: panel.querySelector('[data-step="share"]'),
-    support: panel.querySelector('[data-step="support"]'),
-    share2: panel.querySelector('[data-step="share2"]'),
-    verify: panel.querySelector('[data-step="verify"]'),
+    intro: panel.querySelector('.step[data-step="intro"]'),
+    share: panel.querySelector('.step[data-step="share"]'),
+    support: panel.querySelector('.step[data-step="support"]'),
+    share2: panel.querySelector('.step[data-step="share2"]'),
+    verify: panel.querySelector('.step[data-step="verify"]'),
   };
 
   const btnStart = document.getElementById('btn-start');
@@ -38,6 +38,9 @@
   const countdownNum = document.getElementById('countdown-num');
   const btnJoin = document.getElementById('btn-join');
 
+  const progressDots = document.getElementById('progress-dots');
+  const progressOrder = ['share', 'support', 'share2', 'verify'];
+
   btnJoin.href = GROUP_INVITE_URL;
 
   const RING_CIRCUMFERENCE = 2 * Math.PI * 62;
@@ -55,6 +58,16 @@
     Object.entries(steps).forEach(([key, el]) => {
       el.classList.toggle('hidden', key !== name);
     });
+
+    const idx = progressOrder.indexOf(name);
+    progressDots.classList.toggle('hidden', idx === -1);
+    if (idx !== -1) {
+      progressDots.querySelectorAll('.dot').forEach((dot) => {
+        const dotIdx = progressOrder.indexOf(dot.dataset.dot);
+        dot.classList.toggle('done', dotIdx < idx);
+        dot.classList.toggle('active', dotIdx === idx);
+      });
+    }
   }
 
   function vibrate(ms) {
@@ -300,6 +313,83 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   });
+
+  // ---------- Animated stat counters ----------
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.target, 10);
+    const format = el.dataset.format;
+    function formatValue(v) {
+      if (format === 'k-plus') return v >= 1000 ? `${(v / 1000).toFixed(1)}k+` : `${v}+`;
+      if (format === 'plus') return `+${v}`;
+      return `${v}`;
+    }
+    if (reduceMotion) {
+      el.textContent = formatValue(target);
+      return;
+    }
+    const duration = 1400;
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = formatValue(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- Testimonial rotation ----------
+  const testimonials = [
+    { text: 'Vendi minha moto em 2 dias, muita gente séria no grupo!', name: 'Marcos, Palmeira dos Índios', avatar: 'MC' },
+    { text: 'Comprei uma cabra leiteira boa e no preço certo, super recomendo.', name: 'Edilene, Arapiraca', avatar: 'ED' },
+    { text: 'Grupo bem organizado, sem spam e sempre com preço visível.', name: 'João, Santana do Ipanema', avatar: 'JP' },
+  ];
+  let testimonialIdx = 0;
+  const testimonialEl = document.getElementById('testimonial');
+  const testimonialText = document.getElementById('testimonial-text');
+  const testimonialName = document.getElementById('testimonial-name');
+  const testimonialAvatar = document.getElementById('testimonial-avatar');
+
+  function rotateTestimonial() {
+    testimonialEl.classList.add('fade');
+    setTimeout(() => {
+      testimonialIdx = (testimonialIdx + 1) % testimonials.length;
+      const t = testimonials[testimonialIdx];
+      testimonialText.textContent = t.text;
+      testimonialName.textContent = t.name;
+      testimonialAvatar.textContent = t.avatar;
+      testimonialEl.classList.remove('fade');
+    }, 300);
+  }
+  if (!reduceMotion) setInterval(rotateTestimonial, 4500);
+
+  // ---------- Splash screen ----------
+  const splash = document.getElementById('splash');
+  const appEl = document.getElementById('app');
+  const splashStart = Date.now();
+  const MIN_SPLASH_MS = reduceMotion ? 0 : 900;
+  let revealed = false;
+
+  function revealApp() {
+    if (revealed) return;
+    revealed = true;
+    splash.classList.add('hide');
+    appEl.classList.add('visible');
+    document.querySelectorAll('[data-target]').forEach(animateCounter);
+    setTimeout(() => splash.remove(), 600);
+  }
+
+  function onReady() {
+    const wait = Math.max(0, MIN_SPLASH_MS - (Date.now() - splashStart));
+    setTimeout(revealApp, wait);
+  }
+
+  if (document.readyState === 'complete') {
+    onReady();
+  } else {
+    window.addEventListener('load', onReady);
+  }
+  setTimeout(revealApp, 3000);
 
   showStep('intro');
 })();

@@ -19,12 +19,24 @@
 </head>
 <body>
 
+<div class="splash" id="splash">
+  <div class="splash-logo-wrap">
+    <div class="splash-ring"></div>
+    <img src="assets/logo.png" alt="" class="splash-logo-img">
+  </div>
+  <div class="splash-text">COMPRAS &amp; VENDAS<span>SERTÃO</span></div>
+</div>
+
 <canvas id="bg-canvas"></canvas>
 <div class="grid-overlay"></div>
 
+<svg class="map-outline" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  <path d="M 372,118 C 386,104 384,84 362,72 L 304,48 C 266,34 224,36 190,52 L 132,70 C 96,80 58,90 22,108 C 8,126 10,148 32,162 L 84,182 C 122,198 164,204 206,198 L 268,182 C 308,170 346,150 372,118 Z"/>
+</svg>
+
 <div class="scanline"></div>
 
-<main class="app">
+<main class="app" id="app">
 
   <header class="topbar">
     <div class="brand">
@@ -43,6 +55,13 @@
   <section class="hero">
     <div class="card panel" id="panel">
 
+      <div class="progress-dots hidden" id="progress-dots">
+        <span class="dot" data-dot="share"></span>
+        <span class="dot" data-dot="support"></span>
+        <span class="dot" data-dot="share2"></span>
+        <span class="dot" data-dot="verify"></span>
+      </div>
+
       <!-- STEP 0: INTRO -->
       <div class="step step-intro" data-step="intro">
         <div class="logo-wrap">
@@ -58,18 +77,49 @@
 
         <p class="subtitle">A maior comunidade de compra e venda do Sertão Alagoano. Anuncie, negocie e feche negócios direto com gente da sua região — rápido, fácil e sem enrolação.</p>
 
+        <div class="feed-ticker">
+          <span class="feed-live"><span class="feed-live-dot"></span>AO VIVO</span>
+          <div class="feed-track-wrap">
+            <div class="feed-track">
+              <span class="feed-item">🐐 Cabra leiteira</span>
+              <span class="feed-item">🏍️ Moto Honda 125</span>
+              <span class="feed-item">🚜 Trator usado</span>
+              <span class="feed-item">📱 iPhone 12</span>
+              <span class="feed-item">🛋️ Sala de estar</span>
+              <span class="feed-item">🐔 Galinha caipira</span>
+              <span class="feed-item">🚲 Bicicleta aro 29</span>
+              <span class="feed-item" aria-hidden="true">🐐 Cabra leiteira</span>
+              <span class="feed-item" aria-hidden="true">🏍️ Moto Honda 125</span>
+              <span class="feed-item" aria-hidden="true">🚜 Trator usado</span>
+              <span class="feed-item" aria-hidden="true">📱 iPhone 12</span>
+              <span class="feed-item" aria-hidden="true">🛋️ Sala de estar</span>
+              <span class="feed-item" aria-hidden="true">🐔 Galinha caipira</span>
+              <span class="feed-item" aria-hidden="true">🚲 Bicicleta aro 29</span>
+            </div>
+          </div>
+        </div>
+
         <div class="stat-row">
           <div class="stat">
-            <strong id="stat-members">2.4k+</strong>
+            <strong id="stat-members" data-target="2400" data-format="k-plus">0</strong>
             <span>Membros ativos</span>
           </div>
           <div class="stat">
-            <strong>+180</strong>
+            <strong id="stat-deals" data-target="180" data-format="plus">0</strong>
             <span>Negócios / semana</span>
           </div>
           <div class="stat">
             <strong>24/7</strong>
             <span>Grupo ativo</span>
+          </div>
+        </div>
+
+        <div class="testimonial" id="testimonial">
+          <svg class="quote-icon" viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M9.5 8C6.46 8 4 10.46 4 13.5S6.46 19 9.5 19c.36 0 .7-.05 1.04-.12C9.4 20.6 7.3 22 4.8 22v2c4.2 0 7.7-3.13 7.7-7.5V13.5C12.5 10.46 10.04 8 9.5 8zm10 0c-3.04 0-5.5 2.46-5.5 5.5s2.46 5.5 5.5 5.5c.36 0 .7-.05 1.04-.12-1.14 1.72-3.24 3.12-5.74 3.12v2c4.2 0 7.7-3.13 7.7-7.5V13.5C22.5 10.46 20.04 8 19.5 8z"/></svg>
+          <p class="testimonial-text" id="testimonial-text">Vendi minha moto em 2 dias, muita gente séria no grupo!</p>
+          <div class="testimonial-author">
+            <span class="avatar" id="testimonial-avatar">MC</span>
+            <span id="testimonial-name">Marcos, Palmeira dos Índios</span>
           </div>
         </div>
 
