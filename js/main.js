@@ -6,6 +6,7 @@
   const SHARE_TEXT = 'Entra no grupo COMPRAS E VENDAS - SERTÃO! Compre, venda e negocie com a comunidade 🛒';
   const PIX_KEY = '1f62c9ab-f8cc-43b1-946a-e619a7f135e0';
   const FREE_WAIT_SECONDS = 10 * 60;
+  const PAID_BUTTON_DELAY_MS = 20 * 1000;
   // =======================
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -44,6 +45,7 @@
     freeWaitTimer: null,
     freeWaitRemaining: FREE_WAIT_SECONDS,
     entered: false,
+    paidButtonTimer: null,
   };
 
   // ---------- Helpers ----------
@@ -240,6 +242,11 @@
         btnCopyPix.classList.remove('copied');
         btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Copiar chave Pix';
       }, 2500);
+      if (!state.paidButtonTimer && btnPaidNow.classList.contains('hidden')) {
+        state.paidButtonTimer = setTimeout(() => {
+          btnPaidNow.classList.remove('hidden');
+        }, PAID_BUTTON_DELAY_MS);
+      }
     } catch (e) {
       showToast('Não foi possível copiar automaticamente.');
     }
