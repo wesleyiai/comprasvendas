@@ -4,7 +4,7 @@
   // ======= CONFIG =======
   const GROUP_INVITE_URL = 'https://chat.whatsapp.com/EpU45VYKpLcEpniby02fS8';
   const SHARE_TEXT = 'Entra no grupo COMPRAS E VENDAS - SERTÃO! Compre, venda e negocie com a comunidade 🛒';
-  const PIX_KEY = '30a9a8ac-383b-4dc0-b395-82168a2b5e78';
+  const PIX_KEY = '1f62c9ab-f8cc-43b1-946a-e619a7f135e0';
   const FREE_WAIT_SECONDS = 10 * 60;
   // =======================
 
