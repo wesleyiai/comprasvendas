@@ -334,30 +334,31 @@
     requestAnimationFrame(tick);
   }
 
-  // ---------- Testimonial rotation ----------
-  const testimonials = [
-    { text: 'Vendi minha moto em 2 dias, muita gente séria no grupo!', name: 'Marcos, Palmeira dos Índios', avatar: 'MC' },
-    { text: 'Comprei uma cabra leiteira boa e no preço certo, super recomendo.', name: 'Edilene, Arapiraca', avatar: 'ED' },
-    { text: 'Grupo bem organizado, sem spam e sempre com preço visível.', name: 'João, Santana do Ipanema', avatar: 'JP' },
-  ];
-  let testimonialIdx = 0;
-  const testimonialEl = document.getElementById('testimonial');
-  const testimonialText = document.getElementById('testimonial-text');
-  const testimonialName = document.getElementById('testimonial-name');
-  const testimonialAvatar = document.getElementById('testimonial-avatar');
-
-  function rotateTestimonial() {
-    testimonialEl.classList.add('fade');
-    setTimeout(() => {
-      testimonialIdx = (testimonialIdx + 1) % testimonials.length;
-      const t = testimonials[testimonialIdx];
-      testimonialText.textContent = t.text;
-      testimonialName.textContent = t.name;
-      testimonialAvatar.textContent = t.avatar;
-      testimonialEl.classList.remove('fade');
-    }, 300);
+  // ---------- Online counter (illustrative, not a real headcount) ----------
+  const onlineCountEl = document.getElementById('online-count');
+  if (onlineCountEl) {
+    let onlineCount = parseInt(onlineCountEl.dataset.target, 10) || 0;
+    if (!reduceMotion) {
+      setInterval(() => {
+        onlineCount += Math.floor(Math.random() * 3) + 1;
+        onlineCountEl.textContent = onlineCount;
+      }, 4000 + Math.random() * 3000);
+    }
   }
-  if (!reduceMotion) setInterval(rotateTestimonial, 4500);
+
+  // ---------- "Vagas" loading -> ready ----------
+  const vagasBox = document.getElementById('vagas-box');
+  const vagasSpinner = document.getElementById('vagas-spinner');
+  const vagasDot = document.getElementById('vagas-dot');
+  const vagasText = document.getElementById('vagas-text');
+  if (vagasBox) {
+    setTimeout(() => {
+      vagasBox.classList.add('ready');
+      vagasSpinner.classList.add('hidden');
+      vagasDot.classList.remove('hidden');
+      vagasText.textContent = '03 vagas disponíveis no grupo';
+    }, 3000);
+  }
 
   // ---------- Splash screen ----------
   const splash = document.getElementById('splash');
