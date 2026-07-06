@@ -8,8 +8,8 @@ Portal de acesso ao grupo de WhatsApp **Compras e Vendas - Sertão**. Front-end 
 2. Usuário compartilha o site no WhatsApp (1 única etapa).
 3. Tela de acesso com duas opções, deixadas explícitas para o usuário — nenhuma delas é enganosa:
    - **Pagar R$ 2,00 via Pix** com uma chave aleatória estática (botão de copiar) e entrar na hora, tocando em "Já paguei, entrar no grupo". Isso é uma autodeclaração: como a chave é estática (sem ID de transação nem webhook), o site não tem como verificar automaticamente qual pagamento é de qual visitante — por isso não existe nenhum texto de "verificando..." fingindo checar algo que não pode ser checado. A conferência real, se houver, é manual (extrato bancário).
-   - **Aguardar 10 minutos e entrar de graça**: um contador regressivo visível na mesma tela; ao chegar a zero, o link do grupo é liberado sem cobrança.
-4. O acesso é liberado assim que a pessoa tocar em "Já paguei" (caminho pago) ou quando o contador de 10 minutos chegar a zero (caminho grátis) — o que ocorrer primeiro.
+   - **Aguardar 1 hora e entrar de graça**: um contador regressivo visível na mesma tela; ao chegar a zero, o link do grupo é liberado sem cobrança.
+4. O acesso é liberado assim que a pessoa tocar em "Já paguei" (caminho pago) ou quando o contador de 1 hora chegar a zero (caminho grátis) — o que ocorrer primeiro.
 
 > A tela deixa as duas opções claras lado a lado ("pague e entre agora" ou "aguarde e entre grátis"). Quem paga sabe exatamente pelo que está pagando — pular a espera — e ninguém é levado a pagar por algo que teria de graça sem saber, nem enganado por uma falsa verificação automática.
 
@@ -28,7 +28,7 @@ Edite as constantes no topo de `js/main.js`:
 - `GROUP_INVITE_URL` — link de convite do grupo do WhatsApp.
 - `SHARE_TEXT` — texto pré-preenchido ao compartilhar.
 - `PIX_KEY` — chave Pix aleatória exibida na tela de pagamento.
-- `FREE_WAIT_SECONDS` — duração da espera gratuita (hoje 10 minutos = `10 * 60`).
+- `FREE_WAIT_SECONDS` — duração da espera gratuita (hoje 1 hora = `60 * 60`).
 
 O valor cobrado (R$ 2,00) é apenas texto em `index.html` — como a chave é estática, não há cobrança automatizada.
 

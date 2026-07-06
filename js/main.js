@@ -5,7 +5,7 @@
   const GROUP_INVITE_URL = 'https://chat.whatsapp.com/EpCqYmMhe6eAHz6DRPOMh7';
   const SHARE_TEXT = 'Entra no grupo COMPRAS E VENDAS - SERTÃO! Compre, venda e negocie com a comunidade 🛒';
   const PIX_KEY = '1f62c9ab-f8cc-43b1-946a-e619a7f135e0';
-  const FREE_WAIT_SECONDS = 10 * 60;
+  const FREE_WAIT_SECONDS = 60 * 60;
   const PAID_BUTTON_DELAY_MS = 20 * 1000;
   // =======================
 
@@ -75,13 +75,7 @@
 
   function openWhatsAppShare() {
     const text = `${SHARE_TEXT} ${getShareUrl()}`;
-    if (navigator.share) {
-      navigator.share({ title: 'Compras e Vendas - Sertão', text: SHARE_TEXT, url: getShareUrl() }).catch(() => {
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-      });
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   }
 
   function showToast(message) {
@@ -259,7 +253,7 @@
     grantAccess('paid');
   });
 
-  // ---------- Step 2b: free path (wait 10 min, no payment required) ----------
+  // ---------- Step 2b: free path (wait 1h, no payment required) ----------
   function formatMMSS(totalSeconds) {
     const m = Math.floor(totalSeconds / 60);
     const s = totalSeconds % 60;
