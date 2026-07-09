@@ -4,9 +4,7 @@
   // ======= CONFIG =======
   const GROUP_INVITE_URL = 'https://chat.whatsapp.com/EpCqYmMhe6eAHz6DRPOMh7';
   const SHARE_TEXT = 'Entra no grupo COMPRAS E VENDAS - SERTÃO! Compre, venda e negocie com a comunidade 🛒';
-  const PIX_KEY = '1f62c9ab-f8cc-43b1-946a-e619a7f135e0';
   const FREE_WAIT_SECONDS = 60 * 60;
-  const PAID_BUTTON_DELAY_MS = 20 * 1000;
   // =======================
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -27,8 +25,8 @@
   const rulesPanel = document.getElementById('rules-panel');
   const rulesClose = document.getElementById('rules-close');
 
-  const btnCopyPix = document.getElementById('btn-copy-pix');
-  const btnPaidNow = document.getElementById('btn-paid-now');
+  const btnPayNow = document.getElementById('btn-pay-now');
+  const checkoutStatus = document.getElementById('checkout-status');
   const freeWaitTimerEl = document.getElementById('free-wait-timer');
 
   const btnJoin = document.getElementById('btn-join');
@@ -45,7 +43,7 @@
     freeWaitTimer: null,
     freeWaitRemaining: FREE_WAIT_SECONDS,
     entered: false,
-    paidButtonTimer: null,
+    payChecking: false,
   };
 
   // ---------- Helpers ----------
@@ -213,45 +211,88 @@
     rulesPanel.classList.add('hidden');
   });
 
-  // ---------- Step 2: Pix payment (static key, self-declared) ----------
-  btnCopyPix.addEventListener('click', async () => {
+  // ---------- Step 2: Pix/card payment via InfinitePay checkout ----------
+  const CHECKOUT_STATUS_DEFAULT = 'Você será levado para um checkout seguro. O acesso é liberado automaticamente assim que o pagamento for confirmado.';
+
+  function setCheckoutStatus(message, isError) {
+    checkoutStatus.textContent = message;
+    checkoutStatus.classList.toggle('checkout-status-error', Boolean(isError));
+  }
+
+  btnPayNow.addEventListener('click', async () => {
+    if (btnPayNow.disabled) return;
+    btnPayNow.disabled = true;
+    setCheckoutStatus('Gerando pagamento seguro...', false);
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(PIX_KEY);
-      } else {
-        const textarea = document.createElement('textarea');
-        textarea.value = PIX_KEY;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
+      const resp = await fetch('/api/create-link', { method: 'POST' });
+      const data = await resp.json();
+      if (!resp.ok || !data.url) {
+        throw new Error(data.error || 'Erro ao gerar o link de pagamento');
       }
-      btnCopyPix.classList.add('copied');
-      btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Chave copiada!';
-      showToast('Chave Pix copiada! Cole no app do seu banco 💚');
-      vibrate(15);
-      setTimeout(() => {
-        btnCopyPix.classList.remove('copied');
-        btnCopyPix.querySelector('.btn-3d-face span').textContent = 'Copiar chave Pix';
-      }, 2500);
-      if (!state.paidButtonTimer && btnPaidNow.classList.contains('hidden')) {
-        state.paidButtonTimer = setTimeout(() => {
-          btnPaidNow.classList.remove('hidden');
-        }, PAID_BUTTON_DELAY_MS);
-      }
+      window.location.href = data.url;
     } catch (e) {
-      showToast('Não foi possível copiar automaticamente.');
+      setCheckoutStatus('Não foi possível abrir o pagamento agora. Tente novamente em instantes.', true);
+      btnPayNow.disabled = false;
     }
   });
 
-  // Self-declared: no automated verification is possible against a static
-  // Pix key (no transaction id, no webhook), so this doesn't pretend to check
-  // anything — it takes the person's word and grants access immediately.
-  btnPaidNow.addEventListener('click', () => {
-    grantAccess('paid');
-  });
+  // When InfinitePay redirects the customer back here after checkout, the URL
+  // carries order_nsu/transaction_nsu/slug. Access is only granted after the
+  // server confirms payment against InfinitePay's own records via
+  // /api/check-payment — the query string itself is never trusted directly,
+  // since anyone could type those params into the address bar by hand.
+  function checkPaymentParams(params) {
+    state.payChecking = true;
+    showStep('payment');
+    setCheckoutStatus('Confirmando seu pagamento...', false);
+    btnPayNow.disabled = true;
+
+    const qs = new URLSearchParams(params).toString();
+    fetch(`/api/check-payment?${qs}`)
+      .then((resp) => resp.json().then((data) => ({ ok: resp.ok, data })))
+      .then(({ ok, data }) => {
+        state.payChecking = false;
+        if (ok && data.paid) {
+          grantAccess('paid');
+          return;
+        }
+        btnPayNow.disabled = false;
+        setCheckoutStatus('Ainda não conseguimos confirmar seu pagamento.', true);
+        showRetryCheck(params);
+      })
+      .catch(() => {
+        state.payChecking = false;
+        btnPayNow.disabled = false;
+        setCheckoutStatus('Falha ao confirmar o pagamento.', true);
+        showRetryCheck(params);
+      });
+  }
+
+  function showRetryCheck(params) {
+    let retry = document.getElementById('btn-retry-check');
+    if (!retry) {
+      retry = document.createElement('button');
+      retry.id = 'btn-retry-check';
+      retry.className = 'link-btn';
+      retry.type = 'button';
+      retry.textContent = 'Verificar novamente';
+      checkoutStatus.insertAdjacentElement('afterend', retry);
+    }
+    retry.onclick = () => checkPaymentParams(params);
+  }
+
+  function handlePaymentReturn() {
+    const url = new URL(window.location.href);
+    const orderNsu = url.searchParams.get('order_nsu');
+    const transactionNsu = url.searchParams.get('transaction_nsu');
+    const slug = url.searchParams.get('slug');
+    if (!orderNsu || !transactionNsu || !slug) return false;
+
+    const params = { order_nsu: orderNsu, transaction_nsu: transactionNsu, slug };
+    window.history.replaceState(null, '', window.location.pathname);
+    checkPaymentParams(params);
+    return true;
+  }
 
   // ---------- Step 2b: free path (wait 1h, no payment required) ----------
   function formatMMSS(totalSeconds) {
@@ -288,8 +329,8 @@
     stopFreeWaitCountdown();
 
     if (source === 'paid') {
-      verifyTitle.textContent = 'Tudo certo!';
-      verifySub.textContent = 'Assim que conferirmos seu Pix no extrato, seu acesso fica confirmado. Já pode entrar no grupo! 🎉';
+      verifyTitle.textContent = 'Pagamento confirmado!';
+      verifySub.textContent = 'Seu pagamento foi confirmado automaticamente. Já pode entrar no grupo! 🎉';
     } else {
       verifyTitle.textContent = 'Tempo de espera concluído!';
       verifySub.textContent = 'Seu acesso gratuito foi liberado. Já pode entrar no grupo! 🎉';
@@ -329,28 +370,56 @@
   }
 
   // ---------- Online counter (illustrative, not a real headcount) ----------
+  // Wanders up and down around the initial value instead of only ever climbing.
   const onlineCountEl = document.getElementById('online-count');
   if (onlineCountEl) {
-    let onlineCount = parseInt(onlineCountEl.dataset.target, 10) || 0;
+    const onlineBaseline = parseInt(onlineCountEl.dataset.target, 10) || 0;
     if (!reduceMotion) {
       setInterval(() => {
-        onlineCount += Math.floor(Math.random() * 3) + 1;
-        onlineCountEl.textContent = onlineCount;
-      }, 4000 + Math.random() * 3000);
+        const wander = Math.floor(Math.random() * 60) - 24; // roughly -24..+35
+        onlineCountEl.textContent = Math.max(1, onlineBaseline + wander);
+      }, 3000 + Math.random() * 3000);
     }
   }
 
-  // ---------- "Vagas" loading -> ready ----------
+  // ---------- "Vagas" loading -> countdown ----------
+  // Illustrative scarcity indicator: mostly counts down, occasionally ticks
+  // back up a little (spots "freeing up"), but never reaches zero.
   const vagasBox = document.getElementById('vagas-box');
   const vagasSpinner = document.getElementById('vagas-spinner');
   const vagasDot = document.getElementById('vagas-dot');
   const vagasText = document.getElementById('vagas-text');
   if (vagasBox) {
+    let vagasCount = 12;
+
+    function formatVagas(n) {
+      const num = n < 10 ? '0' + n : String(n);
+      return num + (n === 1 ? ' vaga disponível no grupo' : ' vagas disponíveis no grupo');
+    }
+
+    function nextVagas(n) {
+      const bumpChance = n <= 2 ? 0.4 : n <= 5 ? 0.18 : 0.08;
+      if (Math.random() < bumpChance) {
+        return Math.min(14, n + Math.floor(Math.random() * 4) + 2); // small refill: +2..+5
+      }
+      const step = Math.random() < 0.25 ? 2 : 1;
+      return Math.max(1, n - step);
+    }
+
     setTimeout(() => {
       vagasBox.classList.add('ready');
       vagasSpinner.classList.add('hidden');
       vagasDot.classList.remove('hidden');
-      vagasText.textContent = '03 vagas disponíveis no grupo';
+      vagasText.textContent = formatVagas(vagasCount);
+      vagasBox.classList.toggle('urgent', vagasCount <= 3);
+
+      if (!reduceMotion) {
+        setInterval(() => {
+          vagasCount = nextVagas(vagasCount);
+          vagasText.textContent = formatVagas(vagasCount);
+          vagasBox.classList.toggle('urgent', vagasCount <= 3);
+        }, 2600 + Math.random() * 2400);
+      }
     }, 3000);
   }
 
@@ -386,5 +455,7 @@
   }
   setTimeout(revealApp, 3000);
 
-  showStep('intro');
+  if (!handlePaymentReturn()) {
+    showStep('intro');
+  }
 })();
