@@ -4,31 +4,39 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const accessToken = process.env.MP_ACCESS_TOKEN;
-  if (!accessToken) {
-    res.status(500).json({ error: 'MP_ACCESS_TOKEN não configurado no servidor' });
+  const handle = process.env.INFINITEPAY_HANDLE;
+  if (!handle) {
+    res.status(500).json({ error: 'INFINITEPAY_HANDLE não configurado no servidor' });
     return;
   }
 
-  const { id } = req.query;
-  if (!id) {
-    res.status(400).json({ error: 'Parâmetro id é obrigatório' });
+  const { order_nsu, transaction_nsu, slug } = req.query;
+  if (!order_nsu || !transaction_nsu || !slug) {
+    res.status(400).json({ error: 'Parâmetros order_nsu, transaction_nsu e slug são obrigatórios' });
     return;
   }
 
   try {
-    const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(id)}`, {
-      headers: { 'Authorization': `Bearer ${accessToken}` },
+    const ipRes = await fetch('https://api.checkout.infinitepay.io/payment_check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handle, order_nsu, transaction_nsu, slug }),
     });
-    const data = await mpRes.json();
 
-    if (!mpRes.ok) {
-      res.status(mpRes.status).json({ error: data.message || 'Erro ao consultar pagamento' });
+    const data = await ipRes.json();
+
+    if (!ipRes.ok) {
+      res.status(ipRes.status).json({ error: data.message || 'Erro ao consultar pagamento' });
       return;
     }
 
-    res.status(200).json({ status: data.status, status_detail: data.status_detail });
+    res.status(200).json({
+      paid: Boolean(data.paid),
+      amount: data.amount,
+      paid_amount: data.paid_amount,
+      capture_method: data.capture_method,
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Falha ao comunicar com o Mercado Pago' });
+    res.status(500).json({ error: 'Falha ao comunicar com a InfinitePay' });
   }
 };

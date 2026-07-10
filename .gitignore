@@ -3,3 +3,6 @@ Captura de tela*.png
 .vercel
 .env
 .env.*
+
+.vercel
+.env*

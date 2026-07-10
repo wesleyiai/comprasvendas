@@ -378,7 +378,7 @@
       setInterval(() => {
         const wander = Math.floor(Math.random() * 60) - 24; // roughly -24..+35
         onlineCountEl.textContent = Math.max(1, onlineBaseline + wander);
-      }, 3000 + Math.random() * 3000);
+      }, 900 + Math.random() * 900);
     }
   }
 
@@ -418,7 +418,7 @@
           vagasCount = nextVagas(vagasCount);
           vagasText.textContent = formatVagas(vagasCount);
           vagasBox.classList.toggle('urgent', vagasCount <= 3);
-        }, 2600 + Math.random() * 2400);
+        }, 900 + Math.random() * 900);
       }
     }, 3000);
   }
