@@ -323,11 +323,9 @@
   }
 
   // ---------- Grant access (paid via Pix, or free after the wait) ----------
-  function grantAccess(source) {
-    if (state.entered) return;
-    state.entered = true;
-    stopFreeWaitCountdown();
+  const ACCESS_KEY = 'cv_access';
 
+  function setVerifyText(source) {
     if (source === 'paid') {
       verifyTitle.textContent = 'Pagamento confirmado!';
       verifySub.textContent = 'Seu pagamento foi confirmado automaticamente. Já pode entrar no grupo! 🎉';
@@ -335,10 +333,41 @@
       verifyTitle.textContent = 'Tempo de espera concluído!';
       verifySub.textContent = 'Seu acesso gratuito foi liberado. Já pode entrar no grupo! 🎉';
     }
+  }
+
+  function grantAccess(source) {
+    if (state.entered) return;
+    state.entered = true;
+    stopFreeWaitCountdown();
+    setVerifyText(source);
+
+    // Persisted in localStorage (survives closing the browser/tab) so that if
+    // the customer leaves after paying and comes back later, the join button
+    // is still there instead of restarting the whole flow from scratch.
+    try {
+      localStorage.setItem(ACCESS_KEY, source);
+    } catch (e) {
+      // localStorage unavailable (private mode, etc.) — access still works this session
+    }
 
     showStep('verify');
     fireConfetti();
     vibrate([10, 40, 10]);
+  }
+
+  function restoreAccessIfGranted() {
+    let savedAccess = null;
+    try {
+      savedAccess = localStorage.getItem(ACCESS_KEY);
+    } catch (e) {
+      savedAccess = null;
+    }
+    if (savedAccess !== 'paid' && savedAccess !== 'free') return false;
+
+    state.entered = true;
+    setVerifyText(savedAccess);
+    showStep('verify');
+    return true;
   }
 
   window.addEventListener('resize', () => {
@@ -455,7 +484,7 @@
   }
   setTimeout(revealApp, 3000);
 
-  if (!handlePaymentReturn()) {
+  if (!restoreAccessIfGranted() && !handlePaymentReturn()) {
     showStep('intro');
   }
 })();
