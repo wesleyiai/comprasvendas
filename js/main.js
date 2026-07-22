@@ -28,6 +28,8 @@
   const btnPayNow = document.getElementById('btn-pay-now');
   const checkoutStatus = document.getElementById('checkout-status');
   const freeWaitTimerEl = document.getElementById('free-wait-timer');
+  const inputTelefone = document.getElementById('input-telefone');
+  const telefoneError = document.getElementById('telefone-error');
 
   const btnJoin = document.getElementById('btn-join');
   const verifyTitle = document.getElementById('verify-title');
@@ -211,6 +213,40 @@
     rulesPanel.classList.add('hidden');
   });
 
+  // ---------- Step 2: WhatsApp contact (needed to deliver the invite after payment) ----------
+  function formatTelefone(digits) {
+    const d = digits.slice(0, 11);
+    if (d.length <= 2) return d.length ? `(${d}` : '';
+    if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  }
+
+  function telefoneDigits() {
+    return inputTelefone.value.replace(/\D/g, '');
+  }
+
+  function isTelefoneValido() {
+    return /^\d{11}$/.test(telefoneDigits());
+  }
+
+  function setTelefoneError(show) {
+    inputTelefone.classList.toggle('field-invalid', show);
+    telefoneError.classList.toggle('hidden', !show);
+  }
+
+  if (inputTelefone) {
+    inputTelefone.addEventListener('input', () => {
+      const caretWasAtEnd = inputTelefone.selectionEnd === inputTelefone.value.length;
+      inputTelefone.value = formatTelefone(telefoneDigits());
+      if (caretWasAtEnd) {
+        inputTelefone.setSelectionRange(inputTelefone.value.length, inputTelefone.value.length);
+      }
+      if (telefoneError && !telefoneError.classList.contains('hidden')) {
+        setTelefoneError(!isTelefoneValido());
+      }
+    });
+  }
+
   // ---------- Step 2: Pix/card payment via InfinitePay checkout ----------
   const CHECKOUT_STATUS_DEFAULT = 'Você será levado para um checkout seguro. O acesso é liberado automaticamente assim que o pagamento for confirmado.';
 
@@ -221,10 +257,23 @@
 
   btnPayNow.addEventListener('click', async () => {
     if (btnPayNow.disabled) return;
+
+    if (!isTelefoneValido()) {
+      setTelefoneError(true);
+      inputTelefone.focus();
+      inputTelefone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setTelefoneError(false);
+
     btnPayNow.disabled = true;
     setCheckoutStatus('Gerando pagamento seguro...', false);
     try {
-      const resp = await fetch('/api/create-link', { method: 'POST' });
+      const resp = await fetch('/api/create-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telefone: telefoneDigits() }),
+      });
       const data = await resp.json();
       if (!resp.ok || !data.url) {
         throw new Error(data.error || 'Erro ao gerar o link de pagamento');

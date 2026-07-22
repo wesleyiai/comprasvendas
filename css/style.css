@@ -872,6 +872,53 @@ h2 {
   color: var(--danger);
 }
 
+/* ---------- Phone field (WhatsApp contact, collected before payment) ---------- */
+.field-phone-wrap {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 0 18px;
+  text-align: left;
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.field-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.field-input::placeholder {
+  color: var(--text-faint);
+}
+
+.field-input:focus {
+  border-color: var(--green);
+}
+
+.field-input.field-invalid {
+  border-color: var(--danger);
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--danger);
+}
+
 /* ---------- Motivational quote ---------- */
 .motivational-quote {
   width: 100%;
